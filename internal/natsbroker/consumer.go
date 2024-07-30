@@ -3,7 +3,6 @@ package natsbroker
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
@@ -46,9 +45,25 @@ func (ns *NatsBroker) ConsumeOrders() func(msg jetstream.Msg) {
 			ns.Logger.WithError(err).Error("error unmarshalling JSON for UUID")
 		}
 
-		ns.CacheStorage.Cache.Set(orderinfo["order_uid"].(string), msg_data)
-		ns.DB.AddToDb(orderinfo["order_uid"].(string), msg_data)
+		if !validate(orderinfo) {
+			ns.Logger.Error("invalid data received")
+			return
+		}
 
-		fmt.Println(orderinfo["order_uid"].(string)) //TODO упроситт
+		orderUID, ok := orderinfo["order_uid"].(string)
+		if !ok {
+			ns.Logger.Error("Invalid or missing 'order_uid'")
+			return
+		}
+
+		ns.CacheStorage.Cache.Set(orderUID, msg_data)
+		if err := ns.DB.AddToDb(orderUID, msg_data); err != nil {
+			ns.Logger.WithError(err).Error("Error saving to database")
+			return
+		}
 	}
+}
+
+func validate(data map[string]interface{}) bool {
+	return data["order_uid"] != nil
 }
