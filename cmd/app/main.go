@@ -2,29 +2,31 @@ package main
 
 import (
 	"github.com/MetaException/wb_l0/internal/apiserver"
-	"github.com/MetaException/wb_l0/internal/cache"
+	"github.com/MetaException/wb_l0/internal/cachestorage"
 	"github.com/MetaException/wb_l0/internal/natsbroker"
 	"github.com/MetaException/wb_l0/internal/postgresql"
-	"github.com/sirupsen/logrus"
+	"github.com/MetaException/wb_l0/pkg/logger"
 )
 
 func main() {
 
-	pg := postgresql.New()
+	logger := logger.NewLogrus()
+
+	pg := postgresql.New(logger)
 	defer pg.Close()
 
-	cs := cache.New(pg)
+	cs := cachestorage.New(pg, logger)
 	if err := cs.RestoreCache(); err != nil {
-		logrus.WithError(err).Error("unable to restore cache from db")
+		logger.WithError(err).Error("unable to restore cache from db")
 	}
 
-	ns := natsbroker.New(cs, pg)
+	ns := natsbroker.New(cs, pg, logger)
 	defer ns.Close()
 
 	if err := ns.Listen(); err != nil {
-		logrus.WithError(err).Error("nats listening error")
+		logger.WithError(err).Error("nats listening error")
 	}
 
-	apiserver := apiserver.New(cs)
+	apiserver := apiserver.New(cs, logger)
 	apiserver.Start()
 }

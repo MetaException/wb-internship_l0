@@ -1,7 +1,8 @@
-package cache
+package cachestorage
 
 import (
 	"github.com/MetaException/wb_l0/internal/postgresql"
+	"github.com/MetaException/wb_l0/pkg/cache"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -9,31 +10,15 @@ import (
 type CacheStorage struct {
 	logger *logrus.Logger
 	db     *postgresql.Postgres
+	Cache  *cache.Cache
 }
 
-var storage map[string]any
-
-func New(pg *postgresql.Postgres) *CacheStorage {
-	storage = make(map[string]any)
+func New(pg *postgresql.Postgres, logger *logrus.Logger) *CacheStorage {
 	return &CacheStorage{
-		logger: logrus.New(),
+		logger: logger,
 		db:     pg,
+		Cache:  cache.New(),
 	}
-}
-
-func (cs *CacheStorage) Set(uid string, data any) {
-	storage[uid] = data
-}
-
-func (cs *CacheStorage) Get(uid string) (any, bool) {
-
-	value, ok := storage[uid]
-
-	if !ok {
-		return nil, false
-	}
-
-	return value, true
 }
 
 func (cs *CacheStorage) RestoreCache() error {
@@ -45,7 +30,7 @@ func (cs *CacheStorage) RestoreCache() error {
 	}
 
 	for key, value := range data {
-		cs.Set(key, value)
+		cs.Cache.Set(key, value)
 	}
 
 	return nil

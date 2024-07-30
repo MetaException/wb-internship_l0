@@ -14,15 +14,15 @@ type Postgres struct {
 	conn   *pgx.Conn
 }
 
-func New() *Postgres {
+func New(logger *logrus.Logger) *Postgres {
 
 	conn, err := pgx.Connect(context.Background(), "postgresql://localdbuser:localdbuserpass@localhost:5433/wbl0")
 	if err != nil {
-		logrus.WithError(err).Fatal("unable to connect to db")
+		logger.WithError(err).Fatal("unable to connect to db")
 	}
 
 	return &Postgres{
-		logger: logrus.New(),
+		logger: logger,
 		conn:   conn,
 	}
 }

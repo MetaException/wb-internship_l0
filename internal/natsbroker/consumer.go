@@ -46,7 +46,7 @@ func (ns *NatsBroker) ConsumeOrders() func(msg jetstream.Msg) {
 			ns.Logger.WithError(err).Error("error unmarshalling JSON for UUID")
 		}
 
-		ns.Cache.Set(orderinfo["order_uid"].(string), msg_data)
+		ns.CacheStorage.Cache.Set(orderinfo["order_uid"].(string), msg_data)
 		ns.DB.AddToDb(orderinfo["order_uid"].(string), msg_data)
 
 		fmt.Println(orderinfo["order_uid"].(string)) //TODO упроситт

@@ -4,7 +4,7 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/MetaException/wb_l0/internal/cache"
+	"github.com/MetaException/wb_l0/internal/cachestorage"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -12,12 +12,12 @@ import (
 type APIServer struct {
 	logger       *logrus.Logger
 	router       *mux.Router
-	cacheStorage *cache.CacheStorage
+	cacheStorage *cachestorage.CacheStorage
 }
 
-func New(cacheStorage *cache.CacheStorage) *APIServer {
+func New(cacheStorage *cachestorage.CacheStorage, logger *logrus.Logger) *APIServer {
 	return &APIServer{
-		logger:       logrus.New(),
+		logger:       logger,
 		router:       mux.NewRouter(),
 		cacheStorage: cacheStorage,
 	}
@@ -58,7 +58,7 @@ func (s *APIServer) handleGetOrderInfo() http.HandlerFunc {
 
 		w.Header().Set("Content-Type", "application/json")
 
-		value, ok := s.cacheStorage.Get(uid)
+		value, ok := s.cacheStorage.Cache.Get(uid)
 		if ok {
 			w.Write(value.([]byte))
 		} else {

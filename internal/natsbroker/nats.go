@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/MetaException/wb_l0/internal/cache"
+	"github.com/MetaException/wb_l0/internal/cachestorage"
 	"github.com/MetaException/wb_l0/internal/postgresql"
 	"github.com/nats-io/nats.go"
 	"github.com/pkg/errors"
@@ -12,13 +12,13 @@ import (
 )
 
 type NatsBroker struct {
-	Logger *logrus.Logger
-	Cache  *cache.CacheStorage
-	DB     *postgresql.Postgres
-	conn   *nats.Conn
+	Logger       *logrus.Logger
+	CacheStorage *cachestorage.CacheStorage
+	DB           *postgresql.Postgres
+	conn         *nats.Conn
 }
 
-func New(cacheStorage *cache.CacheStorage, pg *postgresql.Postgres) *NatsBroker {
+func New(cacheStorage *cachestorage.CacheStorage, pg *postgresql.Postgres, logger *logrus.Logger) *NatsBroker {
 
 	nc, err := nats.Connect("nats://localhost:4223")
 
@@ -27,10 +27,10 @@ func New(cacheStorage *cache.CacheStorage, pg *postgresql.Postgres) *NatsBroker 
 	}
 
 	return &NatsBroker{
-		Logger: logrus.New(),
-		Cache:  cacheStorage,
-		DB:     pg,
-		conn:   nc,
+		Logger:       logger,
+		CacheStorage: cacheStorage,
+		DB:           pg,
+		conn:         nc,
 	}
 }
 
