@@ -3,14 +3,14 @@ package postgresql
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 type Postgres struct {
-	logger *logrus.Logger //TODO
+	logger *logrus.Logger
 	conn   *pgx.Conn
 }
 
@@ -18,7 +18,7 @@ func New() *Postgres {
 
 	conn, err := pgx.Connect(context.Background(), "postgresql://localdbuser:localdbuserpass@localhost:5433/wbl0")
 	if err != nil {
-		logrus.Fatal("unable to connect to db: %w", err)
+		logrus.WithError(err).Fatal("unable to connect to db")
 	}
 
 	return &Postgres{
@@ -35,7 +35,8 @@ func (pg *Postgres) AddToDb(uid string, json_data json.RawMessage) error {
 	_, err := pg.conn.Exec(context.Background(), "insert into orders(order_uid, data) values($1, $2)", uid, string(json_data))
 
 	if err != nil {
-		return fmt.Errorf("failed to add to db: %w", err)
+		pg.logger.WithError(err).Error("failed to add to db")
+		return errors.WithStack(err)
 	}
 	return nil
 }
@@ -44,7 +45,8 @@ func (pg *Postgres) GetAllData() (map[string]interface{}, error) {
 	rows, err := pg.conn.Query(context.Background(), "select * from orders")
 
 	if err != nil {
-		return nil, fmt.Errorf("queryRow failed: %w", err)
+		pg.logger.WithError(err).Error("get all data failed")
+		return nil, errors.WithStack(err)
 	}
 
 	orders := make(map[string]interface{})
@@ -55,7 +57,8 @@ func (pg *Postgres) GetAllData() (map[string]interface{}, error) {
 
 		err := rows.Scan(&uid, &json)
 		if err != nil {
-			return nil, fmt.Errorf("failed to scan data from row: %w", err)
+			pg.logger.WithError(err).Error("failed to scan data from row")
+			return nil, errors.WithStack(err)
 		}
 
 		orders[uid] = json

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"github.com/MetaException/wb_l0/internal/postgresql"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -35,10 +36,17 @@ func (cs *CacheStorage) Get(uid string) (any, bool) {
 	return value, true
 }
 
-func (cs *CacheStorage) RestoreCache() {
-	data, _ := cs.db.GetAllData()
+func (cs *CacheStorage) RestoreCache() error {
+	data, err := cs.db.GetAllData()
+
+	if err != nil {
+		cs.logger.WithError(err).Error("unable to get cache from db")
+		return errors.WithStack(err)
+	}
 
 	for key, value := range data {
 		cs.Set(key, value)
 	}
+
+	return nil
 }

@@ -7,14 +7,16 @@ import (
 
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 func NewConsumer(ctx context.Context, nc *nats.Conn) (jetstream.Consumer, error) {
 
 	js, err := jetstream.New(nc)
 	if err != nil {
-		nc.Close()
-		return nil, fmt.Errorf("failed to create JetStream context: %w", err)
+		logrus.WithError(err).Error("failed to create JetStream context")
+		return nil, errors.WithStack(err)
 	}
 
 	c, err := js.CreateOrUpdateConsumer(ctx, "L0_STREAM", jetstream.ConsumerConfig{
@@ -24,23 +26,24 @@ func NewConsumer(ctx context.Context, nc *nats.Conn) (jetstream.Consumer, error)
 	})
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to create consumer for stream L0_STREAM: %w", err)
+		logrus.WithError(err).Error("failed to create consumer for stream L0_STREAM")
+		return nil, errors.WithStack(err)
 	}
 
 	return c, nil
 }
 
-func (ns NatsBroker) ConsumeOrders() func(msg jetstream.Msg) {
+func (ns *NatsBroker) ConsumeOrders() func(msg jetstream.Msg) {
 	return func(msg jetstream.Msg) {
 		msg.Ack()
 
 		msg_data := msg.Data()
 
-		fmt.Printf("Received a JetStream message via callback: %s\n", string(msg_data))
+		ns.Logger.Infof("received a JetStream message via callback: %s", string(msg_data))
 
 		var orderinfo map[string]interface{}
 		if err := json.Unmarshal(msg_data, &orderinfo); err != nil {
-			fmt.Printf("Error unmarshalling JSON for UUID: %v\n", err)
+			ns.Logger.WithError(err).Error("error unmarshalling JSON for UUID")
 		}
 
 		ns.Cache.Set(orderinfo["order_uid"].(string), msg_data)
