@@ -22,6 +22,8 @@ func New(logger *logrus.Logger, config *Config) *Postgres {
 		logger.WithError(err).Fatal("unable to connect to db")
 	}
 
+	logger.Info("successfully connected to database")
+
 	return &Postgres{
 		logger: logger,
 		conn:   conn,
@@ -40,6 +42,9 @@ func (pg *Postgres) AddToDb(uid string, json_data json.RawMessage) error {
 		pg.logger.WithError(err).Error("failed to add to db")
 		return errors.WithStack(err)
 	}
+
+	pg.logger.Info("successfully added the row to db")
+
 	return nil
 }
 
@@ -50,6 +55,8 @@ func (pg *Postgres) GetAllData() (map[string]interface{}, error) {
 		pg.logger.WithError(err).Error("get all data failed")
 		return nil, errors.WithStack(err)
 	}
+
+	pg.logger.Info("successfully received all data from db")
 
 	orders := make(map[string]interface{})
 	for rows.Next() {

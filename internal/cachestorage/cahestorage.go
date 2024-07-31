@@ -33,5 +33,7 @@ func (cs *CacheStorage) RestoreCache() error {
 		cs.Cache.Set(key, value)
 	}
 
+	cs.logger.Infof("restored %v entries from db", len(data))
+
 	return nil
 }

@@ -27,6 +27,8 @@ func (ns *NatsBroker) NewConsumer(ctx context.Context) (jetstream.Consumer, erro
 		return nil, errors.WithStack(err)
 	}
 
+	ns.Logger.Info("successfully crated consumer for stream L0_STREAM")
+
 	return c, nil
 }
 

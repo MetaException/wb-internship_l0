@@ -24,8 +24,10 @@ func New(cacheStorage *cachestorage.CacheStorage, pg *postgresql.Postgres, logge
 	nc, err := nats.Connect(config.URL)
 
 	if err != nil {
-		logrus.WithError(err).Fatal("failed to connect to NATS")
+		logger.WithError(err).Fatal("failed to connect to NATS")
 	}
+
+	logger.Info("successfully connected to NATS")
 
 	return &NatsBroker{
 		Logger:       logger,
