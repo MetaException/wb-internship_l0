@@ -12,11 +12,12 @@ import (
 type Postgres struct {
 	logger *logrus.Logger
 	conn   *pgx.Conn
+	config *Config
 }
 
-func New(logger *logrus.Logger) *Postgres {
+func New(logger *logrus.Logger, config *Config) *Postgres {
 
-	conn, err := pgx.Connect(context.Background(), "postgresql://localdbuser:localdbuserpass@localhost:5433/wbl0")
+	conn, err := pgx.Connect(context.Background(), config.URL)
 	if err != nil {
 		logger.WithError(err).Fatal("unable to connect to db")
 	}
@@ -24,6 +25,7 @@ func New(logger *logrus.Logger) *Postgres {
 	return &Postgres{
 		logger: logger,
 		conn:   conn,
+		config: config,
 	}
 }
 

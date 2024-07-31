@@ -16,11 +16,12 @@ type NatsBroker struct {
 	CacheStorage *cachestorage.CacheStorage
 	DB           *postgresql.Postgres
 	conn         *nats.Conn
+	config       *Config
 }
 
-func New(cacheStorage *cachestorage.CacheStorage, pg *postgresql.Postgres, logger *logrus.Logger) *NatsBroker {
+func New(cacheStorage *cachestorage.CacheStorage, pg *postgresql.Postgres, logger *logrus.Logger, config *Config) *NatsBroker {
 
-	nc, err := nats.Connect("nats://localhost:4223")
+	nc, err := nats.Connect(config.URL)
 
 	if err != nil {
 		logrus.WithError(err).Fatal("failed to connect to NATS")
@@ -31,6 +32,7 @@ func New(cacheStorage *cachestorage.CacheStorage, pg *postgresql.Postgres, logge
 		CacheStorage: cacheStorage,
 		DB:           pg,
 		conn:         nc,
+		config:       config,
 	}
 }
 
@@ -43,7 +45,7 @@ func (ns *NatsBroker) Listen() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	c, err := NewConsumer(ctx, ns.conn)
+	c, err := ns.NewConsumer(ctx)
 
 	if err != nil {
 		ns.Logger.WithError(err).Error("failed to create consumer")

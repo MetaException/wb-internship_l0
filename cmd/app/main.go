@@ -12,7 +12,8 @@ func main() {
 
 	logger := logger.NewLogrus()
 
-	pg := postgresql.New(logger)
+	pgConfig := postgresql.NewEnvConfig()
+	pg := postgresql.New(logger, pgConfig)
 	defer pg.Close()
 
 	cs := cachestorage.New(pg, logger)
@@ -20,13 +21,15 @@ func main() {
 		logger.WithError(err).Error("unable to restore cache from db")
 	}
 
-	ns := natsbroker.New(cs, pg, logger)
+	natsConfig := natsbroker.NewEnvConfig()
+	ns := natsbroker.New(cs, pg, logger, natsConfig)
 	defer ns.Close()
 
 	if err := ns.Listen(); err != nil {
 		logger.WithError(err).Error("nats listening error")
 	}
 
-	apiserver := apiserver.New(cs, logger)
+	apiServerConfig := apiserver.NewEnvConfig()
+	apiserver := apiserver.New(cs, logger, apiServerConfig)
 	apiserver.Start()
 }

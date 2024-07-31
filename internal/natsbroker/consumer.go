@@ -4,28 +4,26 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
-func NewConsumer(ctx context.Context, nc *nats.Conn) (jetstream.Consumer, error) {
+func (ns *NatsBroker) NewConsumer(ctx context.Context) (jetstream.Consumer, error) {
 
-	js, err := jetstream.New(nc)
+	js, err := jetstream.New(ns.conn)
 	if err != nil {
-		logrus.WithError(err).Error("failed to create JetStream context")
+		ns.Logger.WithError(err).Error("failed to create JetStream context")
 		return nil, errors.WithStack(err)
 	}
 
-	c, err := js.CreateOrUpdateConsumer(ctx, "L0_STREAM", jetstream.ConsumerConfig{
+	c, err := js.CreateOrUpdateConsumer(ctx, ns.config.StreamName, jetstream.ConsumerConfig{
 		Durable:       "CONS",
 		AckPolicy:     jetstream.AckExplicitPolicy,
-		FilterSubject: "l0.*",
+		FilterSubject: ns.config.FilterSubject,
 	})
 
 	if err != nil {
-		logrus.WithError(err).Error("failed to create consumer for stream L0_STREAM")
+		ns.Logger.WithError(err).Error("failed to create consumer for stream L0_STREAM")
 		return nil, errors.WithStack(err)
 	}
 

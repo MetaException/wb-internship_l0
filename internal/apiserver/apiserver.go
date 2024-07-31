@@ -13,37 +13,24 @@ type APIServer struct {
 	logger       *logrus.Logger
 	router       *mux.Router
 	cacheStorage *cachestorage.CacheStorage
+	config       *Config
 }
 
-func New(cacheStorage *cachestorage.CacheStorage, logger *logrus.Logger) *APIServer {
+func New(cacheStorage *cachestorage.CacheStorage, logger *logrus.Logger, config *Config) *APIServer {
 	return &APIServer{
 		logger:       logger,
 		router:       mux.NewRouter(),
 		cacheStorage: cacheStorage,
+		config:       config,
 	}
 }
 
 func (s *APIServer) Start() error {
-	if err := s.configureLogger(); err != nil {
-		return err
-	}
-
 	s.logger.Info("starting api server")
 
 	s.configureRouter()
 
-	return http.ListenAndServe(":8080", s.router)
-}
-
-func (s *APIServer) configureLogger() error {
-	level, err := logrus.ParseLevel("debug")
-	if err != nil {
-		return err
-	}
-
-	s.logger.SetLevel(level)
-
-	return nil
+	return http.ListenAndServe(s.config.BindAddr, s.router)
 }
 
 func (s *APIServer) configureRouter() {
