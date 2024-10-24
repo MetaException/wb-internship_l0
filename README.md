@@ -1,5 +1,7 @@
 # Уровень L0
 
+## Задание - [**ТЫК**](https://github.com/MetaException/wb-internship_l0/blob/master/Task.md)
+
 ## Настройка
 
 Файлы конфигурации приложения config.go (internal/*/config.go) для настройки параметров по умолчанию.
